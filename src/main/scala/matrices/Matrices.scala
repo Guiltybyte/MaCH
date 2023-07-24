@@ -3,15 +3,7 @@ package matrices
 
 import chisel3._
 
-// NEXT STEP, START BUILDING NEURAL NETWORKS WITH THIS STUFF
-// TODO Look at Pimp My Library "pattern" blog-post by Odersky for some inspiration in dealing with these generic painscl
-// TODO integration with DSP Tools (optional?)
-// TODO figure out how to support peaking via chiseltest (i.e. custom to string for this type) 
-// TODO make an NN architecture specification class that utilizes these matrices to generate neural network given a description (look at how pytorch does this)
-// TODO it would be nice to not have to pass t
-// TODO maybe should also extend collection?
 class Matrix[T <: Bits with Num[T]](n: Int, m: Int, t: T) extends Bundle {
-  // TODO, Change Matrix to be any chisel type implementing Num (not sure how i should do this), is a mere "Data" enough?
   val rows: Int = n
   val columns: Int = m
   val M: Vec[Vec[T]] = Vec(n, Vec(m, t))
@@ -31,12 +23,11 @@ class Matrix[T <: Bits with Num[T]](n: Int, m: Int, t: T) extends Bundle {
     // weird that this wouldn't work with Seqs, instead of Vecs
     val intermediate_results = Wire(Vec(that.columns, Vec(this.columns, t))) // is it possible to size a Seq at compile time? perhaps i should use something else
 
-    // TODO: is there a functional way to express this? something easier to read?
     for(i <- 0 until this.rows)
       for(j <- 0 until that.columns) {
         for(k <- 0 until this.columns)
           intermediate_results(j)(k) := (this(i)(k) * that(k)(j))
-        result(i)(j) := intermediate_results(j).reduce(_ + _) // sum all results // TODO how to handle generic literals
+        result(i)(j) := intermediate_results(j).reduce(_ + _) // sum all results
       }
     result
   }
@@ -69,15 +60,13 @@ class Matrix[T <: Bits with Num[T]](n: Int, m: Int, t: T) extends Bundle {
   }
 
 
-  // TODO unary elementwise operators
   def +(that: Matrix[T]): Matrix[T] = this.elementwise(that, (x, y) => x + y)
   def -(that: Matrix[T]): Matrix[T] = this.elementwise(that, (x, y) => x - y)
 
-  // Why are these operations not defined for Bits type
+  // TODO define implicit to enable this
   // def &(that: Matrix[T]): Matrix[T] = this.elementwise(that, (x, y) => x & y)
   // def |(that: Matrix[T]): Matrix[T] = this.elementwise(that, (x, y) => x | y)
 
-  // TODO is there a way to generalize this for both 2 arg and 1 arg (i.e. no That) functions
   def elementwise(that: Matrix[T], op: (T, T) => T): Matrix[T] = {
     if((this.columns != that.columns) || (this.rows != that.rows))
       throw new ChiselException("for elementwise operations, dimensions of operands must match")
@@ -96,8 +85,6 @@ class Matrix[T <: Bits with Num[T]](n: Int, m: Int, t: T) extends Bundle {
         result(i)(j) := op(this(i)(j))
     result
   }
-
-  // TODO create a proper peek matrix method utilizing Bundle Literals
 }
 
 // Factory methods
